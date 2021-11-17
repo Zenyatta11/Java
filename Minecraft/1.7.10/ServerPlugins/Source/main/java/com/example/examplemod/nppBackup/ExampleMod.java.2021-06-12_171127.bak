@@ -1,0 +1,103 @@
+package com.example.examplemod;
+
+
+import com.google.common.collect.ImmutableList;
+
+import cpw.mods.fml.common.eventhandler.Cancelable;
+import cpw.mods.fml.common.eventhandler.Event;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.util.BlockSnapshot;
+
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
+import java.util.List;
+
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.Mod.EventHandler;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.passive.EntitySheep;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.init.Items;
+import net.minecraft.init.Blocks;
+import net.minecraft.world.World;
+
+import net.minecraft.block.Block;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.world.BlockEvent;
+
+@Mod(modid = ExampleMod.MODID, version = ExampleMod.VERSION, acceptableRemoteVersions = "*")
+public class ExampleMod {
+    public static final String MODID = "ServerPlugins";
+    public static final String VERSION = "1.0";
+    
+	/**
+     * Fired when a physics update occurs on a block. This event acts as
+     * a way for mods to detect physics updates, in the same way a BUD switch
+     * does. This event is only called on the server.
+     */
+    @Cancelable
+    public static class NeighborNotifyEvent extends BlockEvent
+    {
+        private final EnumSet<EnumFacing> notifiedSides;
+        private final boolean forceRedstoneUpdate;
+
+        public NeighborNotifyEvent(World world, BlockPos pos, IBlockState state, EnumSet<EnumFacing> notifiedSides, boolean forceRedstoneUpdate)
+        {
+            super(world, pos, state);
+            this.notifiedSides = notifiedSides;
+            this.forceRedstoneUpdate = forceRedstoneUpdate;
+        }
+
+        /**
+         * Gets a list of directions from the base block that updates will occur upon.
+         *
+         * @return list of notified directions
+         */
+        public EnumSet<EnumFacing> getNotifiedSides()
+        {
+            return notifiedSides;
+        }
+
+        /**
+         * Get if redstone update was forced during setBlock call (0x16 to flags)
+         * @return if the flag was set
+         */
+        public boolean getForceRedstoneUpdate()
+        {
+            return forceRedstoneUpdate;
+        }
+    }
+	
+    @EventHandler
+    public void init(FMLInitializationEvent event) {
+		MinecraftForge.EVENT_BUS.register(this);
+        
+    }
+	
+	@SubscribeEvent
+	public void onNeighborNotified(NeighborNotifyEvent event){
+		System.out.println("yes");
+	}
+	
+	@SubscribeEvent
+	public void onLivingDrops(LivingDropsEvent event) {
+		Entity mob = event.entityLiving;
+		Entity killer = event.source.getEntity();
+		
+		double pos = mob.posX;
+		
+		event.drops.add(new EntityItem(mob.worldObj, mob.posX, mob.posY, mob.posZ, new ItemStack(Items.bone, 3)));
+		
+		
+		if(mob instanceof EntitySheep) {
+			event.drops.add(new EntityItem(mob.worldObj, mob.posX, mob.posY, mob.posZ, new ItemStack(Items.leather, 3)));
+		}
+	} 
+}
